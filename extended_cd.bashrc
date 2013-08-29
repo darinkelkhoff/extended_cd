@@ -19,7 +19,7 @@ CD_HISTORY_SIZE=250
 ## location for a tmp copy of it while rebuilding it) ##
 ########################################################
 CD_HISTORY=~/.cd_history
-CD_HISTORY_NEW=~/.cd_history.new
+CD_HISTORY_NEW=~/.cd_history.new.$$.${HOSTNAME:-$(hostname)}
 
 
 ##########################################################################
@@ -225,14 +225,15 @@ function cd
    ## remove the new cwd from .cd_history, then re-add it at the end (so ##
    ## it won't be duplicated, and it will be at the bottom of the file)  ##
    ########################################################################
-   grep -v "^$(pwd)\$" $CD_HISTORY > $CD_HISTORY_NEW;
+   grep -v "^$(pwd)\$" $CD_HISTORY | tail -n $((CD_HISTORY_SIZE - 1)) \
+       > $CD_HISTORY_NEW;
    pwd >> $CD_HISTORY_NEW;
 
-   ###############################################################
-   ## chomp the .cd_history file down to only its last $n lines ##
-   ###############################################################
-   tail -n $CD_HISTORY_SIZE $CD_HISTORY_NEW > $CD_HISTORY;
-   rm $CD_HISTORY_NEW;
+   ######################################################################
+   ## mv the updated file into place atomically so another shell won't ##
+   ## ever see partial results.                                        ##
+   ######################################################################
+   mv $CD_HISTORY_NEW $CD_HISTORY
 }
 
 
